@@ -31,9 +31,7 @@ def scoreSort(tab, tabScore):
         z+=1
         if tmpVal == tab[x][1]:
             dic[tab[x][0]] = tabScore[tab[x][0]]
-            print(z)
         elif (tmpVal > tab[x][1]):
-            print(z)
             dic = sorted(dic.items(), key=lambda t: t[1], reverse=True)
             for y in dic:
                 sort.append(y[0])
@@ -48,7 +46,7 @@ def scoreSort(tab, tabScore):
             
 
 
-print("Bonjour a vous,\n\nBienvenue dans ce moteur de recherche de contrat de travail\n")
+print("Bonjour a vous,\n\nBienvenue dans ce moteur de recherche de contrat de travail, merci de patienter un instant...\n")
 
 nlp = spacy.load("fr_core_news_lg")
 client = Api(client_id="PAR_toccupes_cd7d5ac5354e7e76ae1a52a04d9c61d9eb6503b5177b91efdb131e6315fbaa07",
@@ -65,8 +63,8 @@ while not stop:
     searchResult = {}
     searchScore = {}
 
-    recherche = [input("Veuillez entrer votre recherche : ")]
-    print("")
+    recherche = ["orange"]#input("Veuillez entrer votre recherche : ")]
+    print("\nRecherche en cours... \n")
     # Récuperer les mots similaires a la requete utilisateur
     keyss,_,scoress = nlp.vocab.vectors.most_similar(asarray([nlp(word).vector for word in recherche]),n=100)
     for keys, scores in zip(keyss, scoress):
@@ -78,30 +76,34 @@ while not stop:
     doc1 = nlp(recherche[0])
     
     for motCle in tab: # Recherche sur l'api pour chaque mots similaire a la requete utilisateur
-        
+        hasResult = True
         arg={
             "motsCles":motCle,
             "range":"0-20"
             }
-        my_search = client.search(params=arg)
-        x=0
-        y=0
-        for i in my_search["resultats"]:    # trier les résultats par leurs nombre d'apparition dans chaque requetes 
-            doc2 = nlp(my_search['resultats'][x]['appellationlibelle']) 
-            if (my_search['resultats'][x]["intitule"] in search.keys()) and (my_search['resultats'][x]["description"] == searchResult[my_search['resultats'][x]["intitule"]]["description"]):
-                search[my_search['resultats'][x]["intitule"]] += 1
-                if searchScore[my_search['resultats'][x]["intitule"]] < doc1.similarity(doc2):
+        try:
+            my_search = client.search(params=arg)
+        except AttributeError:
+            hasResult = False
+        if hasResult:
+            x=0
+            y=0
+            for i in my_search["resultats"]:    # trier les résultats par leurs nombre d'apparition dans chaque requetes 
+                doc2 = nlp(my_search['resultats'][x]['appellationlibelle']) 
+                if (my_search['resultats'][x]["intitule"] in search.keys()) and (my_search['resultats'][x]["description"] == searchResult[my_search['resultats'][x]["intitule"]]["description"]):
+                    search[my_search['resultats'][x]["intitule"]] += 1
+                    if searchScore[my_search['resultats'][x]["intitule"]] < doc1.similarity(doc2):
+                        searchScore[my_search['resultats'][x]["intitule"]] = doc1.similarity(doc2)
+                elif (my_search['resultats'][x]["intitule"] in search.keys()) and (my_search['resultats'][x]["description"] != searchResult[my_search['resultats'][x]["intitule"]]["description"]):
+                    search["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = 1
+                    searchScore["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = doc1.similarity(doc2)
+                    searchResult["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = my_search['resultats'][x]
+                    y+=1
+                else :
+                    search[my_search['resultats'][x]["intitule"]] = 1
                     searchScore[my_search['resultats'][x]["intitule"]] = doc1.similarity(doc2)
-            elif (my_search['resultats'][x]["intitule"] in search.keys()) and (my_search['resultats'][x]["description"] != searchResult[my_search['resultats'][x]["intitule"]]["description"]):
-                search["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = 1
-                searchScore["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = doc1.similarity(doc2)
-                searchResult["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = my_search['resultats'][x]
-                y+=1
-            else :
-                search[my_search['resultats'][x]["intitule"]] = 1
-                searchScore[my_search['resultats'][x]["intitule"]] = doc1.similarity(doc2)
-                searchResult[my_search['resultats'][x]["intitule"]] = my_search['resultats'][x]
-            x+=1
+                    searchResult[my_search['resultats'][x]["intitule"]] = my_search['resultats'][x]
+                x+=1
     search = sorted(search.items(), key=lambda t: t[1], reverse=True)
     y=0
    
@@ -112,10 +114,18 @@ while not stop:
     for x in search:
         y+=1
         print("[",str(y),"] -",x)
+        if(not y%10):
+            detail = input("\nTapez le numéro de l'offre pour plus de détail. Si vous voulez continuer, tappez sur entrée : ")
+            while True:
+                if detail == "":
+                    break
+                else:
+                    print("\nIntitule :",searchResult[search[int(detail)-1]]["intitule"],"\n\nDescription :",searchResult[search[int(detail)-1]]["description"],"\n\nLieu :",searchResult[search[int(detail)-1]]["lieuTravail"]["libelle"],"\n\nType de contrat : ",searchResult[search[int(detail)-1]]["typeContrat"])
+
+                detail = input("\nTapez le numéro de l'offre pour plus de détail. Si vous voulez continuer, tappez sur entrée : ")
+
         
 
-
-    
     stop = finRequete()
 
 
