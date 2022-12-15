@@ -5,18 +5,13 @@ from numpy import asarray
 
 
 
-def finRequete():
-    stop = False
-    yes = ["oui","Oui","OUI","o","O"]
-    no = ["non","Non","NON","n","N"]
-    while not stop:
-        fin = input("\ncontinuer la recherche ? [oui/non]")
-        if fin in yes:
-            print("Lancement.....................................\n")
-            return False
-        elif fin in no:
-            print("Fin des recherches.................................")
+def newRequete():
+    while True:
+        end = input("\n\nVoulez vous faire une nouvelle recherche ? [oui/non]")
+        if end == "oui" :
             return True
+        elif end == "non" :
+            return False
         else:
             print("Je n'ai pas compris, répondez par \"oui\" ou \"non\" ")
 
@@ -54,8 +49,21 @@ def scoreSort(tab, tabScore):
     for y in dic:
         sort.append(y[0])
     return sort
+
             
-                
+def detailsOffer(index):
+    while True:
+        if index == "":
+            break
+        else:
+            print("\nIntitule :",searchResult[search[int(index)-1]]["intitule"],"\n\nDescription :",searchResult[search[int(index)-1]]["description"],"\n\nLieu :",searchResult[search[int(index)-1]]["lieuTravail"]["libelle"],"\n\nType de contrat :",searchResult[search[int(index)-1]]["typeContrat"])
+            if "libelle" in searchResult[search[int(index)-1]]["salaire"]:   
+                print("\nSalaire :",searchResult[search[int(index)-1]]["salaire"]["libelle"],"\n\nHoraire de travail :",searchResult[search[int(index)-1]]["dureeTravailLibelle"],"\n\nVous pouvez retouver l'offre à cette adresse :",searchResult[search[int(index)-1]]["origineOffre"]["urlOrigine"])
+            else:
+                print("\nSalaire :","Non communiqué","\n\nHoraire de travail :",searchResult[search[int(index)-1]]["dureeTravailLibelle"],"\n\nVous pouvez retouver l'offre à cette adresse :",searchResult[search[int(index)-1]]["origineOffre"]["urlOrigine"])                        
+
+        index = input("\n\nTapez le numéro d'une offre pour plus de détail. Si vous voulez continuer, tappez sur entrée : ")
+
             
 
 
@@ -66,18 +74,19 @@ client = Api(client_id="PAR_toccupes_cd7d5ac5354e7e76ae1a52a04d9c61d9eb6503b5177
              client_secret="e517f83dae8f2a814409e64d3afadf3456317ae15554c9f356c45b56c0cf145d")
 
 
-stop = False
-
-
-
-while not stop:
+while True:
     tab=[]
     search = {}
     searchResult = {}
     searchScore = {}
 
+<<<<<<< Updated upstream
     recherche = requete()
     
+=======
+    recherche = [input("Veuillez entrer votre recherche : ")]
+    print("\nRecherche en cours... \n")
+>>>>>>> Stashed changes
     # Récuperer les mots similaires a la requete utilisateur
     keyss,_,scoress = nlp.vocab.vectors.most_similar(asarray([nlp(word).vector for word in recherche]),n=100)
     for keys, scores in zip(keyss, scoress):
@@ -117,30 +126,25 @@ while not stop:
                     searchResult[my_search['resultats'][x]["intitule"]] = my_search['resultats'][x]
                 x+=1
     search = sorted(search.items(), key=lambda t: t[1], reverse=True)
-    y=0
    
     search = scoreSort(search, searchScore) # trier les doublons de nombre de requete par leurs similarité décroissante
                                             # entre leurs appelationlibelle et la requete utilisateur
-
     y=0
     for x in search:
         y+=1
         print("[",str(y),"] -",x)
         if(not y%10):
-            detail = input("\nTapez le numéro de l'offre pour plus de détail. Si vous voulez continuer, tappez sur entrée : ")
-            while True:
-                if detail == "":
-                    break
-                else:
-                    print("\nIntitule :",searchResult[search[int(detail)-1]]["intitule"],"\n\nDescription :",searchResult[search[int(detail)-1]]["description"],"\n\nLieu :",searchResult[search[int(detail)-1]]["lieuTravail"]["libelle"],"\n\nType de contrat : ",searchResult[search[int(detail)-1]]["typeContrat"])
+            detail = input("\n\nTapez le numéro d'une offre pour plus de détail. Si vous voulez continuer, tappez sur entrée : ")
+            detailsOffer(detail);
+            print("")
 
-                detail = input("\nTapez le numéro de l'offre pour plus de détail. Si vous voulez continuer, tappez sur entrée : ")
+    if(not y%10):
+        detail = input("\n\nIl n'y a plus d'autres offres. Tapez le numéro d'une offre pour plus de détail. Si vous voulez continuer, tappez sur entrée : ")
 
+                    
         
-
-    stop = finRequete()
-
-
+    if not newRequete():
+        break
 
 #Pour récupéré les entitées nommées : 
 #for token in doc.ents:
