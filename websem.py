@@ -4,28 +4,25 @@ import numpy
 from numpy import asarray
 
 
-
 def newRequete():
     while True:
-        end = input("\n\nVoulez vous faire une nouvelle recherche ? [oui/non]")
-        if end == "oui" :
-            return True
-        elif end == "non" :
-            return False
+        end = input("\n\nVoulez vous faire une nouvelle recherche ? [oui/non] ")
+        if end in ["oui","non"] :
+            return end
         else:
             print("Je n'ai pas compris, répondez par \"oui\" ou \"non\" ")
 
 
-def requete():
-    recherche = []
+def request():
+    research = []
     request = input("Veuillez entrer votre recherche : ")
     while True:
         for token in nlp(request):
             if token.tag_ == "NOUN" or token.tag_ == "VERB":
-                recherche.append(token.text)
-        if recherche != []:
+                research.append(token.text)
+        if research != []:
             print("\nRecherche en cours... \n")
-            return recherche
+            return research
         else:
             request = input("Je n'ai pas compris votre demande, veuillez réessayer : ")
 
@@ -79,28 +76,22 @@ while True:
     search = {}
     searchResult = {}
     searchScore = {}
+    research = request()
 
-<<<<<<< Updated upstream
-    recherche = requete()
-    
-=======
-    recherche = [input("Veuillez entrer votre recherche : ")]
-    print("\nRecherche en cours... \n")
->>>>>>> Stashed changes
     # Récuperer les mots similaires a la requete utilisateur
-    keyss,_,scoress = nlp.vocab.vectors.most_similar(asarray([nlp(word).vector for word in recherche]),n=100)
+    keyss,_,scoress = nlp.vocab.vectors.most_similar(asarray([nlp(word).vector for word in research]),n=100)
     for keys, scores in zip(keyss, scoress):
         strings = [nlp.vocab.strings[key] for key in keys]
         for string, score in zip(strings,scores):
             if score > 0.65:
                 tab.append(string)
 
-    doc1 = nlp(recherche[0])
+    doc1 = nlp([0])
     
-    for motCle in tab: # Recherche sur l'api pour chaque mots similaire a la requete utilisateur
+    for keyWord in tab: # Recherche sur l'api pour chaque mots similaire a la requete utilisateur
         hasResult = True
         arg={
-            "motsCles":motCle,
+            "motsCles":keyWord,
             "range":"0-20"
             }
         try:
@@ -143,7 +134,8 @@ while True:
 
                     
         
-    if not newRequete():
+    if newRequest() == "non":
+        print("Merci d'avoir utilisé notre outils!")
         break
 
 #Pour récupéré les entitées nommées : 
