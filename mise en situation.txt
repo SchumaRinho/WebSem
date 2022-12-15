@@ -1,0 +1,26 @@
+
+=========[ 1 ]============
+
+On cherche du travail en tant que boulanger/patissier.
+1 -> recherche classique
+"boulanger"
+resultat 1 -> boulanger-patissier	(vrai positif Grand interet)
+resultat 4 -> boulanger			(vrai positif interet)
+resultat 11 -> patissier		(faux positif interet)
+resultat 35 -> chocolatier-confiseur	(faux positif petit interet)
+resultat 54 -> ouvrier charcutier 	(faux positif aucun interet)
+
+=========[ 2 ]=============
+
+On cherche du travail chez Orange.
+2 -> recherche par entité
+"Orange"
+"ORG"
+resultat 1 -> technicien de télécommunication etc... 	(vrai positif petit interet (pas Orange))
+resultat 2 -> Conseiller vendeur boutique Orange	(vrai positif Grand interet)
+resultat 3 -> Technicien/ operateur Orange		(vrai positif interet)
+resultat 4 -> agent de sécurité sur Orange		(faux positif aucun interet)
+
+la plupart des resultats suivant correspondent principalement à des annonces pour la ville d'Orange
+Orange possèdent sa propre plateforme de recrutement 
+donc pas (ou très peu et difficilement trouvable) d'anonce sur pole emploi
