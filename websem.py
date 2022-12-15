@@ -21,7 +21,20 @@ def finRequete():
             print("Je n'ai pas compris, répondez par \"oui\" ou \"non\" ")
 
 
+def requete():
+    recherche = []
+    request = input("Veuillez entrer votre recherche : ")
+    while True:
+        for token in nlp(request):
+            if token.tag_ == "NOUN" or token.tag_ == "VERB":
+                recherche.append(token.text)
+        if recherche != []:
+            print("\nRecherche en cours... \n")
+            return recherche
+        else:
+            request = input("Je n'ai pas compris votre demande, veuillez réessayer : ")
 
+            
 def scoreSort(tab, tabScore):
     sort=[]
     dic = {}
@@ -63,8 +76,8 @@ while not stop:
     searchResult = {}
     searchScore = {}
 
-    recherche = ["orange"]#input("Veuillez entrer votre recherche : ")]
-    print("\nRecherche en cours... \n")
+    recherche = requete()
+    
     # Récuperer les mots similaires a la requete utilisateur
     keyss,_,scoress = nlp.vocab.vectors.most_similar(asarray([nlp(word).vector for word in recherche]),n=100)
     for keys, scores in zip(keyss, scoress):
@@ -92,8 +105,7 @@ while not stop:
                 doc2 = nlp(my_search['resultats'][x]['appellationlibelle']) 
                 if (my_search['resultats'][x]["intitule"] in search.keys()) and (my_search['resultats'][x]["description"] == searchResult[my_search['resultats'][x]["intitule"]]["description"]):
                     search[my_search['resultats'][x]["intitule"]] += 1
-                    if searchScore[my_search['resultats'][x]["intitule"]] < doc1.similarity(doc2):
-                        searchScore[my_search['resultats'][x]["intitule"]] = doc1.similarity(doc2)
+                    searchScore[my_search['resultats'][x]["intitule"]] = doc1.similarity(doc2)
                 elif (my_search['resultats'][x]["intitule"] in search.keys()) and (my_search['resultats'][x]["description"] != searchResult[my_search['resultats'][x]["intitule"]]["description"]):
                     search["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = 1
                     searchScore["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = doc1.similarity(doc2)
