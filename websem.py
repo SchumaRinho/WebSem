@@ -2,27 +2,17 @@ import spacy
 from offres_emploi import Api #pip install api-offres-emploi
 from numpy import asarray
 
-
-
-def finRequete():
-    stop = False
-    yes = ["oui","Oui","OUI","o","O"]
-    no = ["non","Non","NON","n","N"]
-    while not stop:
-        fin = input("\ncontinuer la recherche ? [oui/non]")
-        if fin in yes:
-            print("\nLancement..........................................\n")
-            return False
-        elif fin in no:
-            print("\nFin des recherches.................................")
-            return True
+def newRequest():
+    while True:
+        end = input("\n\nVoulez vous faire une nouvelle recherche ? [oui/non] ")
+        if end in ["oui","non"] :
+            return end
         else:
             print("Je n'ai pas compris, répondez par \"oui\" ou \"non\" ")
 
-
-def requete():
-    entite = ["ORG","LOC","PER","MISC"]
-    recherche = []
+def request():
+    entities = ["ORG","LOC","PER","MISC"]
+    research = []
     ask = input("Souhaitez vous faire :\n1 - Une recherche classique.\n2 - Une recherche par entités.\n")
     while True:
         if ask == "1":
@@ -30,31 +20,30 @@ def requete():
             while True:
                 for token in nlp(request):
                     if token.tag_ == "NOUN" or token.tag_ == "VERB" or token.tag_ == "PROPN":
-                        recherche.append(token.text)
-                if recherche != []:
+                        research.append(token.text)
+                if research != []:
                     print("\nRecherche en cours... \n")
-                    return recherche, False
+                    return research, False
                 else:
                     request = input("Je n'ai pas compris votre demande, veuillez réessayer : ")
         elif ask == "2":
-            nomEntite = input("\nQuel est le nom de votre entité ? ")
+            nameEntitie = input("\nQuel est le nom de votre entité ? ")
             while True:
-                for token in nlp(nomEntite):
-                    recherche.append(token.text)
-                if recherche != []:
-                    typeEntite = input("\nQuel est le type de cet entité :\nORG - une compagnie, une agence, une institution.\nLOC - Un groupe géographique, un pays, une ville.\nPER - une personnalité, un nom de famille.\n")            
+                for token in nlp(nameEntitie):
+                    research.append(token.text)
+                if research != []:
+                    typeEntitie = input("\nQuel est le type de cet entité :\nORG - une compagnie, une agence, une institution.\nLOC - Un groupe géographique, un pays, une ville.\nPER - une personnalité, un nom de famille.\n")            
                     while True:
-                        if typeEntite in entite:
-                            recherche.append(typeEntite)
+                        if typeEntitie in entities:
+                            research.append(typeEntitie)
                             print("\nRecherche en cours... \n")
-                            return recherche, True
+                            return research, True
                         else:
-                            typeEntite = input("Valeur entrée incorrecte, veuillez réessayer : ")
+                            typeEntitie = input("Valeur entrée incorrecte, veuillez réessayer : ")
                 else:
-                    nomEntite = input("Je n'ai pas compris, quel est le nom de votre entité ? ")
+                    nameEntitie = input("Je n'ai pas compris, quel est le nom de votre entité ? ")
         else:
             ask = input("Je n'ai pas compris votre demande, répondez par \"1\" ou \"2\".")
-
             
 def scoreSort(tab, tabScore):
     sort=[]
@@ -76,8 +65,21 @@ def scoreSort(tab, tabScore):
     for y in dic:
         sort.append(y[0])
     return sort
+
             
-                
+def detailsOffer(index):
+    while True:
+        if index == "":
+            break
+        else:
+            print("\nIntitule :",searchResult[search[int(index)-1]]["intitule"],"\n\nDescription :",searchResult[search[int(index)-1]]["description"],"\n\nLieu :",searchResult[search[int(index)-1]]["lieuTravail"]["libelle"],"\n\nType de contrat :",searchResult[search[int(index)-1]]["typeContrat"])
+            if "libelle" in searchResult[search[int(index)-1]]["salaire"]:   
+                print("\nSalaire :",searchResult[search[int(index)-1]]["salaire"]["libelle"],"\n\nHoraire de travail :",searchResult[search[int(index)-1]]["dureeTravailLibelle"],"\n\nVous pouvez retouver l'offre à cette adresse :",searchResult[search[int(index)-1]]["origineOffre"]["urlOrigine"])
+            else:
+                print("\nSalaire :","Non communiqué","\n\nHoraire de travail :",searchResult[search[int(index)-1]]["dureeTravailLibelle"],"\n\nVous pouvez retouver l'offre à cette adresse :",searchResult[search[int(index)-1]]["origineOffre"]["urlOrigine"])                        
+
+        index = input("\n\nTapez le numéro d'une offre pour plus de détail. Si vous voulez continuer, tappez sur entrée : ")
+
             
 
 
@@ -92,6 +94,7 @@ while True:
     search = {}
     searchResult = {}
     searchScore = {}
+    research = request()
 
     # Requete utilisateur : Recherche classique par mots clés -> recherche seulement sur les noms et les verbes
                           # Recherche par entités -> recherche sur les mots similaires au nom de l'entité
@@ -104,22 +107,22 @@ while True:
         nomEntite2 = nomEntite[0].lower()+nomEntite[1:]
         recherche.append(nomEntite2)
         
-        
-    
     # Récuperer les mots similaires a la requete utilisateur
-    keyss,_,scoress = nlp.vocab.vectors.most_similar(asarray([nlp(word).vector for word in recherche]),n=100)
+    keyss,_,scoress = nlp.vocab.vectors.most_similar(asarray([nlp(word).vector for word in research]),n=100)
     for keys, scores in zip(keyss, scoress):
         strings = [nlp.vocab.strings[key] for key in keys]
         for string, score in zip(strings,scores):
             if score > 0.65:
                 tab.append(string)
-                
-    doc1 = nlp(recherche[0])
+
+
+    doc1 = nlp(research[0])
     
-    for motCle in tab: # Recherche sur l'api pour chaque mots similaire a la requete utilisateur
+    for keyWord in tab: # Recherche sur l'api pour chaque mots similaire a la requete utilisateur
+
         hasResult = True
         arg={
-            "motsCles":motCle,
+            "motsCles":keyWord,
             "range":"0-20"
             }
         try:
@@ -129,6 +132,7 @@ while True:
         if hasResult:
             x=0
             y=0
+            
             for i in my_search["resultats"]:    # trier les résultats par leurs nombre d'apparition dans par requetes 
                 doc2 = nlp(my_search['resultats'][x]['appellationlibelle']) 
                 if (my_search['resultats'][x]["intitule"] in search.keys()) and (my_search['resultats'][x]["description"] == searchResult[my_search['resultats'][x]["intitule"]]["description"]):
@@ -187,16 +191,13 @@ while True:
         y+=1
         print("[",str(y),"] -",x)
         if(not y%10):
-            detail = input("\nTapez le numéro de l'offre pour plus de détail. Si vous voulez continuer, tappez sur entrée : ")
-            while True:
-                if detail == "":
-                    break
-                else:
-                    print("\nIntitule :",searchResult[search[int(detail)-1]]["intitule"],"\n\nDescription :",searchResult[search[int(detail)-1]]["description"],"\n\nLieu :",searchResult[search[int(detail)-1]]["lieuTravail"]["libelle"],"\n\nType de contrat : ",searchResult[search[int(detail)-1]]["typeContrat"])
+            detail = input("\n\nTapez le numéro d'une offre pour plus de détail. Si vous voulez continuer, tappez sur entrée : ")
+            detailsOffer(detail);
+            print("")
 
-                detail = input("\nTapez le numéro de l'offre pour plus de détail. Si vous voulez continuer, tappez sur entrée : ")
-
-    
-
-    if finRequete():
+    if(not y%10):
+        detail = input("\n\nIl n'y a plus d'autres offres. Tapez le numéro d'une offre pour plus de détail. Si vous voulez continuer, tappez sur entrée : ")                
+        
+    if newRequest() == "non":
+        print("Merci d'avoir utilisé notre outil !")
         break
