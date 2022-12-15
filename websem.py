@@ -1,8 +1,6 @@
 import spacy
 from offres_emploi import Api #pip install api-offres-emploi
-import numpy
 from numpy import asarray
-
 
 def newRequete():
     while True:
@@ -86,7 +84,7 @@ while True:
             if score > 0.65:
                 tab.append(string)
 
-    doc1 = nlp([0])
+    doc1 = nlp(research[0])
     
     for keyWord in tab: # Recherche sur l'api pour chaque mots similaire a la requete utilisateur
         hasResult = True
@@ -137,17 +135,4 @@ while True:
     if newRequest() == "non":
         print("Merci d'avoir utilisé notre outils!")
         break
-
-#Pour récupéré les entitées nommées : 
-#for token in doc.ents:
-#    print(token.text,token.label_)
-
-
-# Pour trier les mots de la recherche ? (pas de determinant ou de verbe par exemple)
-##doc = nlp("je travaille en tant que boulanger")
-##for token in doc:
-##    if token.tag_ == "NOUN":
-##        print(token.text)
-
-
 
