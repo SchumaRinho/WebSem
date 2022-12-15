@@ -108,8 +108,8 @@ while True:
     search = scoreSort(search, searchScore) # trier les doublons de nombre de requete par leurs similarité décroissante
                                             # entre leurs appelationlibelle et la requete utilisateur
 
+    # Affichage des resultats de la recherches
     y=0
-    print(search)
     for x in search:
         y+=1
         print("[",str(y),"] -",x)
