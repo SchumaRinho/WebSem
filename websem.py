@@ -22,23 +22,37 @@ def finRequete():
 
 
 def requete():
+    entite = ["ORG","LOC","PER","MISC"]
     recherche = []
-    ask = input("Souhaitez vous faire :\n1 - Une recherche classique.\n2 - Une recherche par entités.")
+    ask = input("Souhaitez vous faire :\n1 - Une recherche classique.\n2 - Une recherche par entités.\n")
     while True:
-        if ask == 1:
+        if ask == "1":
             request = input("\nVeuillez entrer votre recherche : ")
             while True:
                 for token in nlp(request):
-                    if token.tag_ == "NOUN" or token.tag_ == "VERB":
+                    if token.tag_ == "NOUN" or token.tag_ == "VERB" or token.tag_ == "PROPN":
                         recherche.append(token.text)
                 if recherche != []:
                     print("\nRecherche en cours... \n")
-                    return recherche
+                    return recherche, False
                 else:
                     request = input("Je n'ai pas compris votre demande, veuillez réessayer : ")
-        elif ask == 2:
+        elif ask == "2":
             nomEntite = input("\nQuel est le nom de votre entité ? ")
-            typeEntite = input("Quel est le type de cet entité :\nORG - une compagnie, une agence, une institution.\nGPE - Un groupe géopolitique, un pays, une ville.\nPERSON - une personnalité connu.\nPRODUCT - un produit connu.")            
+            while True:
+                for token in nlp(nomEntite):
+                    recherche.append(token.text)
+                if recherche != []:
+                    typeEntite = input("\nQuel est le type de cet entité :\nORG - une compagnie, une agence, une institution.\nLOC - Un groupe géographique, un pays, une ville.\nPER - une personnalité, un nom de famille.\n")            
+                    while True:
+                        if typeEntite in entite:
+                            recherche.append(typeEntite)
+                            print("\nRecherche en cours... \n")
+                            return recherche, True
+                        else:
+                            typeEntite = input("Valeur entrée incorrecte, veuillez réessayer : ")
+                else:
+                    nomEntite = input("Je n'ai pas compris, quel est le nom de votre entité ? ")
         else:
             ask = input("Je n'ai pas compris votre demande, répondez par \"1\" ou \"2\".")
 
@@ -73,19 +87,20 @@ nlp = spacy.load("fr_core_news_lg")
 client = Api(client_id="PAR_toccupes_cd7d5ac5354e7e76ae1a52a04d9c61d9eb6503b5177b91efdb131e6315fbaa07",
              client_secret="e517f83dae8f2a814409e64d3afadf3456317ae15554c9f356c45b56c0cf145d")
 
-
-stop = False
-
-
-
-while not stop:
+while True:
     tab=[]
     search = {}
     searchResult = {}
     searchScore = {}
 
-    # Requete utilisateur : Recherche effectuer seulement sur les noms et les verbes
-    recherche = requete()
+    # Requete utilisateur : Recherche classique par mots clés -> recherche seulement sur les noms et les verbes
+                          # Recherche par entités -> recherche sur les mots similaires au nom de l'entité
+    recherche, entite = requete()
+
+    if entite :
+        typeEntite = recherche[1]
+        nomEntite = recherche[0]
+        recherche = [recherche[0]]
     
     # Récuperer les mots similaires a la requete utilisateur
     keyss,_,scoress = nlp.vocab.vectors.most_similar(asarray([nlp(word).vector for word in recherche]),n=100)
@@ -110,26 +125,58 @@ while not stop:
         if hasResult:
             x=0
             y=0
-            for i in my_search["resultats"]:    # trier les résultats par leurs nombre d'apparition dans chaque requetes 
+            for i in my_search["resultats"]:    # trier les résultats par leurs nombre d'apparition dans par requetes 
                 doc2 = nlp(my_search['resultats'][x]['appellationlibelle']) 
                 if (my_search['resultats'][x]["intitule"] in search.keys()) and (my_search['resultats'][x]["description"] == searchResult[my_search['resultats'][x]["intitule"]]["description"]):
                     search[my_search['resultats'][x]["intitule"]] += 1
-                    searchScore[my_search['resultats'][x]["intitule"]] = doc1.similarity(doc2)
+                    if doc2.has_vector:
+                        searchScore[my_search['resultats'][x]["intitule"]] = doc1.similarity(doc2)
+                    else:
+                        searchScore[my_search['resultats'][x]["intitule"]] = 0.00
                 elif (my_search['resultats'][x]["intitule"] in search.keys()) and (my_search['resultats'][x]["description"] != searchResult[my_search['resultats'][x]["intitule"]]["description"]):
-                    search["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = 1
-                    searchScore["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = doc1.similarity(doc2)
-                    searchResult["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = my_search['resultats'][x]
-                    y+=1
+                    if entite:
+                        search["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = 1
+                        searchResult["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = my_search['resultats'][x]
+                        if doc2.has_vector:
+                            searchScore["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = doc1.similarity(doc2)
+                        else:
+                            searchScore["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = 0.00
+                        doc = nlp(my_search["resultats"][x]["description"])
+                        for token in doc.ents:
+                            if token.text == nomEntite and token.label_ == typeEntite:
+                                search["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] += 1
+                        y+=1          
+                    else:
+                        search["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = 1
+                        searchResult["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = my_search['resultats'][x]
+                        if doc2.has_vector:
+                            searchScore["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = doc1.similarity(doc2)
+                        else:
+                            searchScore["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = 0.00
+                        y+=1
                 else :
-                    search[my_search['resultats'][x]["intitule"]] = 1
-                    searchScore[my_search['resultats'][x]["intitule"]] = doc1.similarity(doc2)
-                    searchResult[my_search['resultats'][x]["intitule"]] = my_search['resultats'][x]
+                    if entite: # trier les résultats par leurs nombre d'apparition par requete + le nombre d'apparition de l'entité nommés
+                        search[my_search['resultats'][x]["intitule"]] = 1
+                        searchResult[my_search['resultats'][x]["intitule"]] = my_search['resultats'][x]
+                        if doc2.has_vector:
+                            searchScore[my_search['resultats'][x]["intitule"]] = doc1.similarity(doc2)
+                        else:
+                            searchScore[my_search['resultats'][x]["intitule"]] = 0.00
+                        doc = nlp(my_search["resultats"][x]["description"])
+                        for token in doc.ents:
+                            if token.text == nomEntite and token.label_ == typeEntite:
+                                search[my_search['resultats'][x]["intitule"]] += 1 
+                    else:
+                        search[my_search['resultats'][x]["intitule"]] = 1
+                        searchResult[my_search['resultats'][x]["intitule"]] = my_search['resultats'][x]
+                        if doc2.has_vector:
+                            searchScore[my_search['resultats'][x]["intitule"]] = doc1.similarity(doc2)
+                        else:
+                            searchScore[my_search['resultats'][x]["intitule"]] = 0.00
+                        
                 x+=1
-    search = sorted(search.items(), key=lambda t: t[1], reverse=True)
-    y=0
-   
-    search = scoreSort(search, searchScore) # trier les doublons de nombre de requete par leurs similarité décroissante
-                                            # entre leurs appelationlibelle et la requete utilisateur
+    search = sorted(search.items(), key=lambda t: t[1], reverse=True)   
+    search = scoreSort(search, searchScore) # trier les doublons de nombre de requete par leurs similarité décroissante entre leurs appelationlibelle et la requete utilisateur
 
     y=0
     for x in search:
@@ -145,15 +192,7 @@ while not stop:
 
                 detail = input("\nTapez le numéro de l'offre pour plus de détail. Si vous voulez continuer, tappez sur entrée : ")
 
-        
+    
 
-    stop = finRequete()
-
-
-
-#Pour récupéré les entitées nommées : 
-#for token in doc.ents:
-#    print(token.text,token.label_)
-
-
-
+    if finRequete():
+        break
