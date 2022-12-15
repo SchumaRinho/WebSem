@@ -1,6 +1,5 @@
 import spacy
 from offres_emploi import Api #pip install api-offres-emploi
-import numpy
 from numpy import asarray
 
 
@@ -72,6 +71,7 @@ def scoreSort(tab, tabScore):
                 sort.append(y[0])
             dic={}
             tmpVal = tab[x][1]
+            dic[tab[x][0]] = tabScore[tab[x][0]]
     dic = sorted(dic.items(), key=lambda t: t[1], reverse=True)
     for y in dic:
         sort.append(y[0])
@@ -100,7 +100,11 @@ while True:
     if entite :
         typeEntite = recherche[1]
         nomEntite = recherche[0]
-        recherche = [recherche[0]]
+        recherche = [nomEntite]
+        nomEntite2 = nomEntite[0].lower()+nomEntite[1:]
+        recherche.append(nomEntite2)
+        
+        
     
     # Récuperer les mots similaires a la requete utilisateur
     keyss,_,scoress = nlp.vocab.vectors.most_similar(asarray([nlp(word).vector for word in recherche]),n=100)
@@ -109,7 +113,7 @@ while True:
         for string, score in zip(strings,scores):
             if score > 0.65:
                 tab.append(string)
-
+                
     doc1 = nlp(recherche[0])
     
     for motCle in tab: # Recherche sur l'api pour chaque mots similaire a la requete utilisateur
@@ -143,7 +147,7 @@ while True:
                             searchScore["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = 0.00
                         doc = nlp(my_search["resultats"][x]["description"])
                         for token in doc.ents:
-                            if token.text == nomEntite and token.label_ == typeEntite:
+                            if (token.text == nomEntite or token.text == nomEntite2) and token.label_ == typeEntite:
                                 search["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] += 1
                         y+=1          
                     else:
@@ -164,7 +168,7 @@ while True:
                             searchScore[my_search['resultats'][x]["intitule"]] = 0.00
                         doc = nlp(my_search["resultats"][x]["description"])
                         for token in doc.ents:
-                            if token.text == nomEntite and token.label_ == typeEntite:
+                            if (token.text == nomEntite or token.text == nomEntite2) and token.label_ == typeEntite:
                                 search[my_search['resultats'][x]["intitule"]] += 1 
                     else:
                         search[my_search['resultats'][x]["intitule"]] = 1
