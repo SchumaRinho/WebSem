@@ -2,7 +2,7 @@ import spacy
 from offres_emploi import Api #pip install api-offres-emploi
 from numpy import asarray
 
-
+# Fonction si l'utilisateur souhaite faire une nouvelle recherche
 def newRequest():
     while True:
         end = input("\n\nVoulez vous faire une nouvelle recherche ? [oui/non] ")
@@ -11,16 +11,18 @@ def newRequest():
         else:
             print("Je n'ai pas compris, répondez par \"oui\" ou \"non\" ")
 
-
+# Fonction pour récupéré la requete utilisateur
 def request():
     entities = ["ORG","LOC","PER","MISC"]
     research = []
     ask = input("Souhaitez vous faire :\n1 - Une recherche classique.\n2 - Une recherche par entités.\n")
     while True:
+        # Cas de recherche classique :
         if ask == "1":
             request = input("\nVeuillez entrer votre recherche : ")
             while True:
                 for token in nlp(request):
+                    # Dans le cas ou l'utilisateur ecrit une phrase, on ne récupère que les noms, les noms propres et les verbes (pour une recherche moins longue et plus précise)
                     if token.tag_ == "NOUN" or token.tag_ == "VERB" or token.tag_ == "PROPN":
                         research.append(token.text)
                 if research != []:
@@ -28,9 +30,11 @@ def request():
                     return research, False
                 else:
                     request = input("Je n'ai pas compris votre demande, veuillez réessayer : ")
+        # Cas de recherche par entité : 
         elif ask == "2":
             nameEntitie = input("\nQuel est le nom de votre entité ? ")
             while True:
+                # On verifie que les champs ne sont pas vide
                 for token in nlp(nameEntitie):
                     research.append(token.text)
                 if research != []:
@@ -48,31 +52,40 @@ def request():
             ask = input("Je n'ai pas compris votre demande, répondez par \"1\" ou \"2\".")
 
             
-
+# Fonction pour trier/classer les annonces par ordre d'interet en fonction de leurs nombre d'apparition par requetes
 def scoreSort(tab, tabScore):
     sort=[]
     dic = {}
+    # tmpVal = Nombre d'apparition de l'annonce parmis toutes les requetes effectuer
     tmpVal = tab[0][1]
     z=0
     for x in range(len(tab)):
         z+=1
+        # Si l'annonce précedente et l'anonce qu'on regarde sont apparu le meme nombre de fois, alors on met cette annonce dans un dictionnaire
         if tmpVal == tab[x][1]:
+            # Clé = nom de l'annonce, Valeur = Score de similitude entre son libelle d'appellation et la requete de base
             dic[tab[x][0]] = tabScore[tab[x][0]]
+        # Si les annonces ne sont pas apparus le meme nombre de fois : on trie le dictionnaire, on le vide dans un tableau "sort" et on met l'anonce actuel dedans.
         elif (tmpVal > tab[x][1]):
+            
             dic = sorted(dic.items(), key=lambda t: t[1], reverse=True)
             for y in dic:
                 sort.append(y[0])
             dic={}
             tmpVal = tab[x][1]
             dic[tab[x][0]] = tabScore[tab[x][0]]
+    # Une fois qu'on a parcouru toute les annonces, on trie le dictionnaire et on le vide dans le tableau "sort"
     dic = sorted(dic.items(), key=lambda t: t[1], reverse=True)
     for y in dic:
         sort.append(y[0])
+    # On retourne le tableau "sort" qui contient touts les intitulés d'annonce dans le bon ordre d'interet.
+    # Les premières annonces seront celle avec le nombre d'apparition la plus élevé.
+    # Si plusieurs annonces ont un nombre égale : Les premières parmis elles seront celle qui seront le plus proche avec la requete utilisateur
     return sort
 
 
-            
-def detailsOffer(index): #Menu pour afficher le détail des offres
+# Menu pour afficher le détail des offres
+def detailsOffer(index): 
     while True:
 
         if index == "stop":
