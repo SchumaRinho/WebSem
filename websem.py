@@ -72,7 +72,7 @@ def scoreSort(tab, tabScore):
 
 
             
-def detailsOffer(index):
+def detailsOffer(index): #Menu pour afficher le détail des offres
     while True:
 
         if index == "stop":
