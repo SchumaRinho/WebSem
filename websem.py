@@ -2,6 +2,7 @@ import spacy
 from offres_emploi import Api #pip install api-offres-emploi
 from numpy import asarray
 
+
 def newRequest():
     while True:
         end = input("\n\nVoulez vous faire une nouvelle recherche ? [oui/non] ")
@@ -9,6 +10,7 @@ def newRequest():
             return end
         else:
             print("Je n'ai pas compris, répondez par \"oui\" ou \"non\" ")
+
 
 def request():
     entities = ["ORG","LOC","PER","MISC"]
@@ -32,7 +34,7 @@ def request():
                 for token in nlp(nameEntitie):
                     research.append(token.text)
                 if research != []:
-                    typeEntitie = input("\nQuel est le type de cet entité :\nORG - une compagnie, une agence, une institution.\nLOC - Un groupe géographique, un pays, une ville.\nPER - une personnalité, un nom de famille.\n")            
+                    typeEntitie = input("\nQuel est le type de cet entité :\nORG - compagnie, agence, institution.\nLOC - groupe géographique, pays, ville.\nPER - personnalité, nom de famille.\nMISC - autres (nationalités,produits,...)\n")            
                     while True:
                         if typeEntitie in entities:
                             research.append(typeEntitie)
@@ -44,7 +46,9 @@ def request():
                     nameEntitie = input("Je n'ai pas compris, quel est le nom de votre entité ? ")
         else:
             ask = input("Je n'ai pas compris votre demande, répondez par \"1\" ou \"2\".")
+
             
+
 def scoreSort(tab, tabScore):
     sort=[]
     dic = {}
@@ -66,11 +70,17 @@ def scoreSort(tab, tabScore):
         sort.append(y[0])
     return sort
 
+
             
 def detailsOffer(index):
     while True:
-        if index == "":
-            break
+
+        if index == "stop":
+            return False
+        
+        elif index == "":
+            return True
+
         else:
             print("\nIntitule :",searchResult[search[int(index)-1]]["intitule"],"\n\nDescription :",searchResult[search[int(index)-1]]["description"],"\n\nLieu :",searchResult[search[int(index)-1]]["lieuTravail"]["libelle"],"\n\nType de contrat :",searchResult[search[int(index)-1]]["typeContrat"])
             if "libelle" in searchResult[search[int(index)-1]]["salaire"]:   
@@ -78,7 +88,7 @@ def detailsOffer(index):
             else:
                 print("\nSalaire :","Non communiqué","\n\nHoraire de travail :",searchResult[search[int(index)-1]]["dureeTravailLibelle"],"\n\nVous pouvez retouver l'offre à cette adresse :",searchResult[search[int(index)-1]]["origineOffre"]["urlOrigine"])                        
 
-        index = input("\n\nTapez le numéro d'une offre pour plus de détail. Si vous voulez continuer, tappez sur entrée : ")
+        index = input("\n\nTapez le numéro d'une offre pour plus de détail. Si vous voulez continuer, tapez sur entrée. Si vous voulez arreter, tapez stop : ")
 
             
 
@@ -94,18 +104,18 @@ while True:
     search = {}
     searchResult = {}
     searchScore = {}
-    research = request()
 
     # Requete utilisateur : Recherche classique par mots clés -> recherche seulement sur les noms et les verbes
                           # Recherche par entités -> recherche sur les mots similaires au nom de l'entité
-    recherche, entite = requete()
 
-    if entite :
-        typeEntite = recherche[1]
-        nomEntite = recherche[0]
-        recherche = [nomEntite]
-        nomEntite2 = nomEntite[0].lower()+nomEntite[1:]
-        recherche.append(nomEntite2)
+    research, entitie = request()
+
+    if entitie :
+        typeEntitie = research[1]
+        nameEntitie = research[0]
+        research = [nameEntitie]
+        nameEntitie2 = nameEntitie.lower()
+        research.append(nameEntitie2)
         
     # Récuperer les mots similaires a la requete utilisateur
     keyss,_,scoress = nlp.vocab.vectors.most_similar(asarray([nlp(word).vector for word in research]),n=100)
@@ -118,7 +128,7 @@ while True:
 
     doc1 = nlp(research[0])
     
-    for keyWord in tab: # Recherche sur l'api pour chaque mots similaire a la requete utilisateur
+    for keyWord in tab: # Recherche sur l'api pour chaque mots similaire à la requete utilisateur
 
         hasResult = True
         arg={
@@ -133,7 +143,7 @@ while True:
             x=0
             y=0
             
-            for i in my_search["resultats"]:    # trier les résultats par leurs nombre d'apparition dans par requetes 
+            for i in my_search["resultats"]:    # trier les résultats par leurs nombre d'apparition dans par requete
                 doc2 = nlp(my_search['resultats'][x]['appellationlibelle']) 
                 if (my_search['resultats'][x]["intitule"] in search.keys()) and (my_search['resultats'][x]["description"] == searchResult[my_search['resultats'][x]["intitule"]]["description"]):
                     search[my_search['resultats'][x]["intitule"]] += 1
@@ -141,63 +151,57 @@ while True:
                         searchScore[my_search['resultats'][x]["intitule"]] = doc1.similarity(doc2)
                     else:
                         searchScore[my_search['resultats'][x]["intitule"]] = 0.00
+                 
                 elif (my_search['resultats'][x]["intitule"] in search.keys()) and (my_search['resultats'][x]["description"] != searchResult[my_search['resultats'][x]["intitule"]]["description"]):
-                    if entite:
-                        search["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = 1
-                        searchResult["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = my_search['resultats'][x]
-                        if doc2.has_vector:
-                            searchScore["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = doc1.similarity(doc2)
-                        else:
-                            searchScore["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = 0.00
+
+                    search["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = 1
+                    searchResult["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = my_search['resultats'][x]
+
+                    if doc2.has_vector:
+                        searchScore["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = doc1.similarity(doc2)
+                    else:
+                        searchScore["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = 0.00    
+
+                    if entitie:   # trier les résultats par leurs nombre d'apparition par requete + le nombre d'apparition de l'entité nommés
                         doc = nlp(my_search["resultats"][x]["description"])
                         for token in doc.ents:
-                            if (token.text == nomEntite or token.text == nomEntite2) and token.label_ == typeEntite:
+                            if (token.text == nameEntitie or token.text == nameEntitie2) and token.label_ == typeEntitie:
                                 search["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] += 1
-                        y+=1          
-                    else:
-                        search["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = 1
-                        searchResult["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = my_search['resultats'][x]
-                        if doc2.has_vector:
-                            searchScore["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = doc1.similarity(doc2)
-                        else:
-                            searchScore["("+str(y)+")"+str(my_search['resultats'][x]["intitule"])] = 0.00
-                        y+=1
+                    y+=1          
+
                 else :
-                    if entite: # trier les résultats par leurs nombre d'apparition par requete + le nombre d'apparition de l'entité nommés
-                        search[my_search['resultats'][x]["intitule"]] = 1
-                        searchResult[my_search['resultats'][x]["intitule"]] = my_search['resultats'][x]
-                        if doc2.has_vector:
-                            searchScore[my_search['resultats'][x]["intitule"]] = doc1.similarity(doc2)
-                        else:
-                            searchScore[my_search['resultats'][x]["intitule"]] = 0.00
+                    
+                    search[my_search['resultats'][x]["intitule"]] = 1
+                    searchResult[my_search['resultats'][x]["intitule"]] = my_search['resultats'][x]
+                    
+                    if doc2.has_vector:
+                        searchScore[my_search['resultats'][x]["intitule"]] = doc1.similarity(doc2)
+                    else:
+                        searchScore[my_search['resultats'][x]["intitule"]] = 0.00
+                        
+                    if entitie: 
                         doc = nlp(my_search["resultats"][x]["description"])
                         for token in doc.ents:
-                            if (token.text == nomEntite or token.text == nomEntite2) and token.label_ == typeEntite:
+                            if (token.text == nameEntitie or token.text == nameEntitie2) and token.label_ == typeEntitie:
                                 search[my_search['resultats'][x]["intitule"]] += 1 
-                    else:
-                        search[my_search['resultats'][x]["intitule"]] = 1
-                        searchResult[my_search['resultats'][x]["intitule"]] = my_search['resultats'][x]
-                        if doc2.has_vector:
-                            searchScore[my_search['resultats'][x]["intitule"]] = doc1.similarity(doc2)
-                        else:
-                            searchScore[my_search['resultats'][x]["intitule"]] = 0.00
                         
                 x+=1
     search = sorted(search.items(), key=lambda t: t[1], reverse=True)   
-    search = scoreSort(search, searchScore) # trier les doublons de nombre de requete par leurs similarité décroissante entre leurs appelationlibelle et la requete utilisateur
+    search = scoreSort(search, searchScore) # trier les doublons de nombre de requete par leurs similarité décroissante entre leurs "appelationlibelle" et la requete utilisateur
 
     y=0
+    print(len(search),"offres trouvés : \n")
     for x in search:
         y+=1
         print("[",str(y),"] -",x)
         if(not y%10):
-            detail = input("\n\nTapez le numéro d'une offre pour plus de détail. Si vous voulez continuer, tappez sur entrée : ")
-            detailsOffer(detail);
+            detail = input("\n\nTapez le numéro d'une offre pour plus de détail. Si vous voulez continuer, tapez sur entrée. Si vous voulez arreter, tapez stop : ")
+            if not detailsOffer(detail):
+                break
             print("")
-
-    if(not y%10):
-        detail = input("\n\nIl n'y a plus d'autres offres. Tapez le numéro d'une offre pour plus de détail. Si vous voulez continuer, tappez sur entrée : ")                
+            
         
     if newRequest() == "non":
-        print("Merci d'avoir utilisé notre outil !")
+        print("\nMerci d'avoir utilisé notre outil !")
         break
+

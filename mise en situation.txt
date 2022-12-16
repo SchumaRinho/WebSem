@@ -22,5 +22,4 @@ resultat 3 -> Technicien/ operateur Orange		(vrai positif interet)
 resultat 4 -> agent de sécurité sur Orange		(faux positif aucun interet)
 
 la plupart des resultats suivant correspondent principalement à des annonces pour la ville d'Orange
-Orange possèdent sa propre plateforme de recrutement 
-donc pas (ou très peu et difficilement trouvable) d'anonce sur pole emploi
+Orange possèdent sa propre plateforme de recrutement, donc ils n'ont pas (ou très peu) d'anonce sur pôle emploi.
